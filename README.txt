@@ -1,0 +1,154 @@
+MiAi — Hierarchical Semantic Chunking + CSV HITL v2
+====================================================
+
+This build upgrades ingestion/chunking while preserving the existing local pipeline:
+
+source -> ingestion-worker -> retrieval-worker / Context Mesh -> prompt-worker -> WebLLM
+
+Runtime
+-------
+index.html
+ingestion-worker.js        miai-ingestion-2.0.0
+retrieval-worker.js        miai-retrieval-2.3.0
+reasoning-worker.js
+prompt-worker.js
+llm-worker.js
+arena-worker.js
+audio-manager.js
+audio-worker.js
+
+Chunking policy
+---------------
+- Sentence-boundary splitting only.
+- Roughly 60 words per content chunk.
+- Hierarchy is respected before size:
+    source title -> chapter -> heading -> subheading -> section_id -> chunk_id
+- Paragraph/topic boundaries are preferred when they produce a coherent chunk.
+- A lightweight lexical continuity check helps avoid joining unrelated sentences.
+- Quotes are separate chunk_type=quote chunks.
+- Image captions are separate chunk_type=image_caption chunks.
+- Reference sections are removed from content chunks and placed in a reference table.
+- URLs are metadata (links) rather than being mixed into text_chunk.
+- Citation markers are metadata (citations) rather than being mixed into text_chunk.
+- Whole-sentence overlap targets 10-20%. If no whole sentence can fit that band,
+  MiAi prefers sentence integrity rather than cutting a sentence to force overlap.
+
+Why no LLM is required for chunk boundaries
+-------------------------------------------
+The hierarchy, paragraph boundaries, sentence boundaries and local vocabulary are
+sufficient to make chunking deterministic and reproducible. This is important for HITL:
+the same reviewed CSV should rebuild the same source structure instead of changing when
+a generative model samples differently.
+
+Pre-upload source profile
+-------------------------
+Before a normal document upload, MiAi requests:
+- Specific Domain / Industry / Sector
+- Other domain text when required
+- Document nature / core concept
+- Document type
+
+The profile is attached to every chunk and is indexed by Retrieval V2.3. It helps
+queries containing domain terminology even when the exact phrase is not repeated in
+every paragraph.
+
+Keywords
+--------
+Each generated chunk receives up to 10 keywords (normally 5-10 where sufficient text
+exists). Extraction prioritises:
+- chapter / heading / subheading terms
+- capitalised noun phrases
+- 2-3 word content phrases
+- noun-like technical terms
+
+Common stop words such as the, and, is, are, of, for, with, a, an, to and in are
+removed from keyword candidates.
+
+CSV HITL v2
+-----------
+The CSV is now chunk-centred.
+
+Core reconstruction fields:
+    section_id
+    section_order
+    chunk_id
+    chunk_order
+    text_chunk
+
+Hierarchy and metadata fields include:
+    chapter
+    heading
+    subheading
+    chunk_type
+    keywords
+    citations
+    reference_materials
+    links
+    images
+    aliases
+    related_record_ids
+    related_chunk_ids
+
+Round trip:
+    PDF / DOCX / TXT
+          -> MiAi hierarchical ingestion
+          -> sentence chunks
+          -> Export processed CSV
+          -> human corrections
+          -> re-upload CSV
+          -> chunk IDs/content retained
+          -> Context Mesh / retrieval rebuilt
+
+When re-importing v2 chunk CSV, MiAi reconstructs section reading text by removing only
+exact sentence overlap between adjacent chunk rows. The reviewed chunk_id and text_chunk
+remain authoritative for retrieval.
+
+Backward compatibility
+----------------------
+Earlier MiAi v1 structured CSV files using record_id + heading + text are still
+accepted. They are converted to sections and rechunked using the v2 rules.
+
+References
+----------
+References are separate from content chunks.
+
+Files:
+    miai-references-template.csv
+    miai-reference-csv-schema.json
+
+Content chunks link to references through reference_materials IDs, e.g.:
+    ref_001|ref_004
+
+For common numeric and author-year citations, normal document ingestion attempts a
+conservative automatic mapping to detected reference entries. Human reviewers can
+correct the reference_materials field during HITL.
+
+Static backend / no PHP
+-----------------------
+content/sources/
+    manifest.json
+    active.csv
+    references.csv
+
+manifest.json can point to both tables. They are fetched directly over same-origin
+HTTP/HTTPS. PHP, Node and a database are not required.
+
+Context Mesh
+------------
+Retrieval V2.3 indexes:
+- source title
+- chapter / heading / subheading
+- domain / core concept / document type
+- noun-phrase keywords
+- aliases
+- citations / reference IDs
+- chunk text
+
+Human HITL mappings remain strong relationships:
+- related_record_ids
+- related_chunk_ids (direct chunk-to-chunk mapping)
+
+Important distinction
+---------------------
+Humans edit meaningful source/chunk metadata. Derived BM25 statistics, semantic vectors,
+RRF scores and other indexes remain disposable and are regenerated by MiAi.

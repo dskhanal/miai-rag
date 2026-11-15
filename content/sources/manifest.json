@@ -1,0 +1,10 @@
+{
+  "schema_version": "miai-source-csv-2.0",
+  "active": "active.csv",
+  "references": "references.csv",
+  "auto_load": false,
+  "sources": [
+    "active.csv"
+  ],
+  "notes": "Static HTTP/HTTPS deployment. Replace active.csv and references.csv directly; no PHP required."
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "miai-source-csv-2.0",
+  "required_columns": [
+    "section_id",
+    "chunk_id",
+    "text_chunk"
+  ],
+  "chunking_policy": {
+    "boundary": "sentence",
+    "target_words": 60,
+    "target_range_words": "roughly 40-80 depending on coherent paragraph/quote/caption boundaries",
+    "overlap": "10-20% where a whole-sentence overlap fits the range",
+    "hierarchy": [
+      "chapter",
+      "heading",
+      "subheading",
+      "section_id",
+      "chunk_id"
+    ],
+    "keyword_count": "5-10",
+    "keyword_policy": "noun-phrase first; stop words removed"
+  },
+  "columns": {
+    "schema_version": "CSV interchange schema version.",
+    "source_id": "Stable source identifier shared by rows.",
+    "source_title": "Document/lesson/chapter title; high-value retrieval metadata.",
+    "source_type": "Original/processed source type.",
+    "domain": "Specific domain / industry / sector.",
+    "domain_other": "Specific domain text when domain=Other.",
+    "core_concept": "Document nature / core concept supplied before upload.",
+    "document_type": "news|article|journal_article|lesson_chapter|policy_guideline|research_paper|report|manual_procedure|legislation_standard|textbook|case_study|notes|other.",
+    "section_id": "Stable original section identifier.",
+    "section_order": "Sequential section order.",
+    "chunk_id": "Stable sequential chunk identifier within section.",
+    "chunk_order": "Sequential chunk number within section.",
+    "include": "true/false; false excludes row from retrieval while preserving audit history.",
+    "chunk_type": "content|quote|image_caption|reference.",
+    "record_id": "Optional stable source-record identifier for Context Mesh compatibility.",
+    "record_type": "section|concept|definition|procedure|evidence|finding|limitation|example|warning|caption|reference etc.",
+    "chapter": "Lesson/chapter/title hierarchy metadata.",
+    "heading": "Heading hierarchy metadata; inherited by child chunks.",
+    "subheading": "Subheading hierarchy metadata; inherited by child chunks.",
+    "parent_section_id": "Optional parent section.",
+    "page_number": "Original page when known.",
+    "text_chunk": "Retrieval text only; links/citations/reference data are kept in metadata fields.",
+    "keywords": "Pipe-separated 5-10 noun-phrase-first retrieval terms.",
+    "citations": "Pipe-separated citation markers/text extracted from chunk.",
+    "reference_materials": "Pipe-separated reference IDs linking to the separate reference table.",
+    "links": "Pipe-separated URLs; not mixed into text_chunk.",
+    "images": "Pipe-separated image captions/labels; image captions may also have their own chunk_type=image_caption row.",
+    "aliases": "Pipe-separated alternative names/titles/abbreviations.",
+    "related_record_ids": "Pipe-separated strong human-curated Context Mesh record links.",
+    "related_chunk_ids": "Pipe-separated direct human-curated chunk links.",
+    "review_status": "machine_processed|unreviewed|reviewed|approved|rejected.",
+    "reviewer_notes": "Administrative HITL notes; never source evidence.",
+    "human_corrected": "true/false."
+  },
+  "backward_compatibility": "MiAi still accepts v1 rows containing record_id, heading and text and rechunks them with v2 rules."
+}

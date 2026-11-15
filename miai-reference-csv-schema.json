@@ -1,0 +1,17 @@
+{
+  "schema_version": "miai-reference-csv-1.0",
+  "required_columns": [
+    "reference_id",
+    "citation_text"
+  ],
+  "columns": {
+    "schema_version": "Source CSV schema version.",
+    "source_id": "Source identifier.",
+    "reference_id": "Stable reference ID used by chunk reference_materials.",
+    "citation_text": "Full reference/citation text.",
+    "links": "Pipe-separated DOI/URL links.",
+    "page_number": "Source page if known.",
+    "review_status": "machine_processed|unreviewed|reviewed|approved|rejected.",
+    "reviewer_notes": "Administrative HITL notes."
+  }
+}

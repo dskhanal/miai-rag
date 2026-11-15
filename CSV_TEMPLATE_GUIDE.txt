@@ -1,0 +1,69 @@
+MiAi Sentence-Chunk HITL CSV v2
+===============================
+
+Purpose
+-------
+MiAi now exports retrieval-ready chunks rather than only large source records.
+The round trip is:
+
+PDF/DOCX/TXT/CSV -> hierarchical ingestion -> sentence-boundary chunks -> export CSV
+-> human review/correction -> re-upload CSV -> Retrieval V2 / Context Mesh.
+
+Before a normal file upload MiAi asks for:
+- Specific Domain / Industry / Sector
+- Other domain text when required
+- Document nature / core concept
+- Document type
+
+Chunk policy
+------------
+- Split only on sentence boundaries.
+- Target roughly 60 words.
+- Keep chapter / heading / subheading boundaries intact.
+- Prefer paragraph/topic boundaries over forcing an exact size.
+- Keep quote and image-caption chunks separate from normal content.
+- Add whole-sentence overlap targeting 10-20% when a sentence fits that band.
+- chunk_id is sequential within section_id.
+- Keywords are 5-10 noun-phrase-first terms with stop words removed.
+
+Core hierarchy
+--------------
+chapter -> heading -> subheading -> section_id -> chunk_id
+
+High-value metadata
+-------------------
+source_title, chapter, heading and subheading are indexed but are not repeated
+inside text_chunk.
+
+Do not place these in text_chunk
+--------------------------------
+- URLs: use links
+- citation markers: use citations
+- reference entries: use the separate references table and reference_materials IDs
+- image captions mixed into prose: use chunk_type=image_caption
+
+HITL fields
+-----------
+include=false keeps a row for audit but removes it from retrieval.
+human_corrected=true identifies reviewed/corrected chunks.
+related_record_ids creates strong Context Mesh record links.
+related_chunk_ids creates direct strong links between specific chunks.
+
+References
+----------
+miai-references-template.csv is a separate reference table.
+Chunks link to it through reference_materials, e.g. ref_001|ref_004.
+
+Static backend
+--------------
+content/sources/active.csv
+content/sources/references.csv
+content/sources/manifest.json
+
+These files can be replaced directly on any ordinary static HTTP/HTTPS host.
+No PHP or database is required.
+
+Backward compatibility
+----------------------
+Earlier MiAi v1 CSV files (record_id, heading, text) are still accepted. MiAi
+reconstructs those records and rechunks them with the v2 sentence-boundary rules.
